@@ -123,102 +123,113 @@ $(document).ready(function () {
 
 
 <p><a href="http://rmarkdown.rstudio.com" class="uri">http://rmarkdown.rstudio.com</a>.</p>
-<pre class="r"><code>## Synopsis: 
-
-## Getting, cleaning and tidying data
-
-## 1. Downloading training data from the respectives URLs:
-urlTraining &lt;- &quot;https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv&quot;
-fileTraining &lt;- &quot;pml-training.csv&quot;
-urlTesting &lt;- &quot;https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv&quot;
-fileTesting &lt;- &quot;pml-testing.csv&quot;
-## 1.1. Import the data making empty values as NAs.
-training &lt;- read.csv(fileTraining, na.strings=c(&quot;NA&quot;,&quot;&quot;), header=TRUE)
+<div id="synopsis" class="section level2">
+<h2>Synopsis:</h2>
+</div>
+<div id="getting-cleaning-and-tidying-data" class="section level2">
+<h2>Getting, cleaning and tidying data</h2>
+<div id="loading-training-data-previously-downloaded-from-the-respectives-urls" class="section level3">
+<h3>1. Loading training data previously downloaded from the respectives URLs:</h3>
+<p>training <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv" class="uri">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv</a>, and testing <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv" class="uri">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv</a></p>
+<pre class="r"><code>fileTraining &lt;- &quot;pml-training.csv&quot;
+fileTesting &lt;- &quot;pml-testing.csv&quot;</code></pre>
+<ul>
+<li>Import the data making empty values as NAs.</li>
+</ul>
+<pre class="r"><code>training &lt;- read.csv(fileTraining, na.strings=c(&quot;NA&quot;,&quot;&quot;), header=TRUE)
 testing &lt;- read.csv(fileTesting, na.strings=c(&quot;NA&quot;,&quot;&quot;), header=TRUE)
-## 1.2. Checking identity names except the last colname
 trainNames &lt;- colnames(training)
-testNames &lt;- colnames(testing)
-## 1.3. Have the two data sets the same columns
-all.equal(trainNames[-length(trainNames)], testNames[-length(testNames)])</code></pre>
+testNames &lt;- colnames(testing)</code></pre>
+<ul>
+<li>Now check identity of the names except the last colnames; Have the two data sets the same columns?</li>
+</ul>
+<pre class="r"><code>all.equal(trainNames[-length(trainNames)], testNames[-length(testNames)])</code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="r"><code>## 2. There are a lot of columns filled of NAs. Lets see how much
-numNAsTraining &lt;- apply(training, 2, function(x) sum(is.na(x)))
+</div>
+<div id="cleaning-tidying-datasets" class="section level3">
+<h3>2. Cleaning-tidying datasets:</h3>
+<ul>
+<li>There are a lot of columns filled of NAs. Lets see how much</li>
+</ul>
+<pre class="r"><code>numNAsTraining &lt;- apply(training, 2, function(x) sum(is.na(x)))
+numNAsTesting &lt;- apply(testing, 2, function(x) sum(is.na(x)))
+saveRDS(numNAsTraining, &quot;./numNAsTraining.RDS&quot;) ## saving object
+saveRDS(numNAsTesting, &quot;./numNAsTesting.RDS&quot;) ## saving object
 table(as.numeric(numNAsTraining))</code></pre>
 <pre><code>## 
 ##     0 19216 
 ##    60   100</code></pre>
-<pre class="r"><code>numNAsTesting &lt;- apply(testing, 2, function(x) sum(is.na(x)))
-## 60 of them have 0 NAs and 100 of them have 19216 NAs. That's mean all those 100 columns have a proportion of cases as NAs of
-max(as.numeric(numNAsTraining)) / nrow(training)</code></pre>
-<pre><code>## [1] 0.9793089</code></pre>
-<pre class="r"><code>## 2.1. Will not try to replace them because of the high proportion; instead will remove them because they doesn't allow to calculate predictions with the model if included as newdata.
-training &lt;- training[,(numNAsTraining == 0)]
-testing &lt;- testing[,(numNAsTesting == 0)]
-## Then let's check the number of NAs now
-sum(is.na(training))</code></pre>
+<ul>
+<li><p>60 of them have 0 NAs and 100 of them have 19216 NAs. That’s mean all those 100 columns have a proportion of cases as NAs of 0.9793089%</p></li>
+<li><p>Will not try to replace them because of the high proportion; instead will remove them because they doesn’t allow to calculate predictions with the model if included as newdata.</p></li>
+<li><p>Then let’s check the number of NAs now</p></li>
+</ul>
+<pre class="r"><code>sum(is.na(training))</code></pre>
 <pre><code>## [1] 0</code></pre>
 <pre class="r"><code>sum(is.na(testing))</code></pre>
 <pre><code>## [1] 0</code></pre>
-<pre class="r"><code>## 2.2. I'll not take in account the first sevent columns, namely:
-colnames(training)[1:7]</code></pre>
-<pre><code>## [1] &quot;X&quot;                    &quot;user_name&quot;            &quot;raw_timestamp_part_1&quot;
-## [4] &quot;raw_timestamp_part_2&quot; &quot;cvtd_timestamp&quot;       &quot;new_window&quot;          
-## [7] &quot;num_window&quot;</code></pre>
-<pre class="r"><code>## because they talk about row names, user names, time stamps in differents formats and the windows of observations
-training &lt;- training[, 8:ncol(training)]
-testing &lt;- testing[, 8:ncol(testing)]
-## then we gotta check both data sets have the same columns except by the last one (class or output)
-all.equal(names(training[,-ncol(training)]), names(testing[,-ncol(testing)]))</code></pre>
+<ul>
+<li>I’ll not take in account the first sevent columns, namely: X, user_name, raw_timestamp_part_1, raw_timestamp_part_2, cvtd_timestamp, new_window, num_window because they talk about row names, user names, time stamps in differents formats and the windows of observations</li>
+</ul>
+<pre class="r"><code>training &lt;- training[, 8:ncol(training)]
+testing &lt;- testing[, 8:ncol(testing)]</code></pre>
+<ul>
+<li>both data sets have the same columns except by the last one (class or output)?: are equals all the columns except the last one?</li>
+</ul>
+<pre class="r"><code>all.equal(names(training[,-ncol(training)]), names(testing[,-ncol(testing)]))</code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="r"><code>## 3. So far we have the test set ready-tidy to start applying machine learning. So let's partitioning the data... 60% - 20% - 20%%
-library(caret)</code></pre>
+</div>
+</div>
+<div id="training-models" class="section level2">
+<h2>3. Training models:</h2>
+<ul>
+<li>So far we have the test set ready-tidy to start applying machine learning. So let’s partitioning the data… 60% - 20% - 20%</li>
+</ul>
+<pre class="r"><code>library(caret)</code></pre>
 <pre><code>## Loading required package: lattice</code></pre>
 <pre><code>## Loading required package: ggplot2</code></pre>
 <pre class="r"><code>set.seed(1981)
 inTrain &lt;- createDataPartition(training$classe, p = 0.60, list = FALSE)
 trainingAll &lt;- training[inTrain, ]
-testingAll &lt;- training[-inTrain, ]
-## and check that the partitioning did well done: it's the sum of the number of cases of the two new data equal to the number of cases of the original
-nrow(trainingAll) + nrow(testingAll) == nrow(training)</code></pre>
-<pre><code>## [1] TRUE</code></pre>
-<pre class="r"><code>## Now I gonna split the testingAll dataset into two blocks, one for testing and the another for 
-## validation
-set.seed(1982)
+testingAll &lt;- training[-inTrain, ]</code></pre>
+<ul>
+<li><p>Now gotta check that the partitioning did well done: it’s the sum of the number of cases of the two new data equal to the number of cases of the original? TRUE</p></li>
+<li><p>Now we can proceed to split the testingAll dataset into two blocks, one for testing and the another for validation</p></li>
+</ul>
+<pre class="r"><code>set.seed(1982)
 inTrain &lt;- createDataPartition(y = testingAll$classe, p = 0.50, list = FALSE)
 testingTrained &lt;- testingAll[inTrain, ]
-validationtrained &lt;- testingAll[-inTrain, ]
-## Let's check
-nrow(testingTrained) + nrow(validationtrained) == nrow(testingAll)</code></pre>
+validationtrained &lt;- testingAll[-inTrain, ]</code></pre>
+<ul>
+<li>Let’s check if the new tow data sets partition conserves all the cases</li>
+</ul>
+<pre class="r"><code>nrow(testingTrained) + nrow(validationtrained) == nrow(testingAll)</code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="r"><code>## Because of the time that takes to run a random forest on a data set as big as this (I tryed it for 
-## around 30 minutes with parallelizing for allow me to use three of the cores of a 
-## Intel® Core™ i7-6500U CPU @ 2.50GHz × 4 with 8GB of RAM availables, but couldn't see the work ended)
-## rpart as method yields just 0.5073 of accuracy, not enougth
-## lda as method yields just 0.7 of accuracy, not enougth
-## svm as method yields a accuracy of 0.89. It's not so bad
-
-dim(trainingAll)</code></pre>
-<pre><code>## [1] 11776    53</code></pre>
-<pre class="r"><code>## I will to split the dataset in 5 folds aiming to run the random forest and other models on each one
-## and then stack them together with a random forest again
-set.seed(1983)
+<ul>
+<li><p>It takes a lot of time to train a random forest model on a data set as big as this (rows = 11776 x cols = 53). I tryed it for around 30 minutes with parallelizing for allowing the use of three of the cores of a Intel® Core™ i7-6500U CPU @ 2.50GHz × 4 with 8GB of RAM availables, but couldn’t see the work ended and some issues appears with the closing of conections of the cluster for paralleilzation. So, I tried rpart as method, and yields just 0.5073 of accuracy, not enougth to pass the quizz. Tried lda as method, but yields just 0.7 of accuracy, not enougth. Also svm with a accuracy of 0.89. It’s not so bad, but random forest is better.</p></li>
+<li><p>I choose to split the dataset in 4 folds aiming to reduce the training random forest models time, and then stack them all four together with a random forest again.</p></li>
+<li><p>Splitting the data onto four folds:</p></li>
+</ul>
+<pre class="r"><code>set.seed(1983)
 inTrain &lt;- createFolds(y = trainingAll$classe, k = 4)
 training1 &lt;- trainingAll[inTrain$Fold1, ]
 training2 &lt;- trainingAll[inTrain$Fold2, ]
 training3 &lt;- trainingAll[inTrain$Fold3, ]
-training4 &lt;- trainingAll[inTrain$Fold4, ]
-## Checking there are not repeated cases (rows): make a vector with all the elements of the lists (the
-## cases and find out if there are duplicates among them)
-DF &lt;- rbind(as.numeric(inTrain$Fold1, inTrain$Fold2, inTrain$Fold3, inTrain$Fold4))
+training4 &lt;- trainingAll[inTrain$Fold4, ]</code></pre>
+<ul>
+<li>Because I’m not confident with this partitioning method, have to ensure that there are not repeated cases (rows): make a vector with all the elements of the lists (the cases and find out if there are duplicates among them)</li>
+</ul>
+<pre class="r"><code>DF &lt;- rbind(as.numeric(inTrain$Fold1, inTrain$Fold2, inTrain$Fold3, inTrain$Fold4))
 duplicated(DF)</code></pre>
 <pre><code>## [1] FALSE</code></pre>
-<pre class="r"><code>## Checking no losses of rows
-nrow(trainingAll) == nrow(training1) + nrow(training2) + nrow(training3) + nrow(training4)</code></pre>
+<p>and then check no losses of rows</p>
+<pre class="r"><code>nrow(trainingAll) == nrow(training1) + nrow(training2) + nrow(training3) + nrow(training4)</code></pre>
 <pre><code>## [1] TRUE</code></pre>
-<pre class="r"><code>## follow the instructions of lgreski aiming to speed up the process
-## on https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md
-## Set up training run for x / y syntax because model format performs poorly
-x1 &lt;- training1[, -ncol(training1)]
+<ul>
+<li>Now, following the instructions of Mentor Len Greski on <a href="https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md" class="uri">https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md</a>, my objetive it’s to speed up the process:</li>
+</ul>
+<p>– First set up training set to the x / y syntax because model format performs poorly on the formula way</p>
+<pre class="r"><code>x1 &lt;- training1[, -ncol(training1)]
 y1 &lt;- training1[, ncol(training1)]
 x2 &lt;- training2[, -ncol(training2)]
 y2 &lt;- training2[, ncol(training2)]
@@ -226,61 +237,53 @@ x3 &lt;- training3[, -ncol(training3)]
 y3 &lt;- training3[, ncol(training3)]
 x4 &lt;- training4[, -ncol(training4)]
 y4 &lt;- training4[, ncol(training4)]
-## Step 1: Configure parallel processing
-library(parallel)
+saveRDS(x1, &quot;./x1.RDS&quot;)
+saveRDS(y1, &quot;./y1.RDS&quot;)
+saveRDS(x2, &quot;./x2.RDS&quot;)
+saveRDS(y2, &quot;./y2.RDS&quot;)
+saveRDS(x3, &quot;./x3.RDS&quot;)
+saveRDS(y3, &quot;./y3.RDS&quot;)
+saveRDS(x4, &quot;./x4.RDS&quot;)
+saveRDS(y4, &quot;./y4.RDS&quot;)</code></pre>
+<p>– Configure parallel processing</p>
+<pre class="r"><code>library(parallel)
 library(doParallel)</code></pre>
 <pre><code>## Loading required package: foreach</code></pre>
 <pre><code>## Loading required package: iterators</code></pre>
 <pre class="r"><code>cluster &lt;- makeCluster(detectCores() - 1) # convention to leave 1 core for OS
-registerDoParallel(cluster)
-## Step 2: Configure trainControl object
-fitControl &lt;- trainControl(method = &quot;cv&quot;,
+registerDoParallel(cluster)</code></pre>
+<p>– Configure trainControl object</p>
+<pre class="r"><code>fitControl &lt;- trainControl(method = &quot;cv&quot;,
                            number = 3,
-                           allowParallel = TRUE)
-## Step 3: Develop training model
-set.seed(1984)
-mdl1 &lt;- train(x1, y1, method = &quot;rf&quot;, trControl = fitControl, data = training1)</code></pre>
-<pre><code>## Loading required package: randomForest</code></pre>
-<pre><code>## randomForest 4.6-12</code></pre>
-<pre><code>## Type rfNews() to see new features/changes/bug fixes.</code></pre>
-<pre><code>## 
-## Attaching package: 'randomForest'</code></pre>
-<pre><code>## The following object is masked from 'package:ggplot2':
-## 
-##     margin</code></pre>
-<pre class="r"><code>mdl2 &lt;- train(x2, y2, method = &quot;rf&quot;, trControl = fitControl, data = training2)
-mdl3 &lt;- train(x3, y3, method = &quot;rf&quot;, trControl = fitControl, data = training3)
-mdl4 &lt;- train(x4, y4, method = &quot;rf&quot;, trControl = fitControl, data = training4)
-## Step 4: De-register parallel processing cluster
-stopCluster(cluster)
-
-## checking metrics with confusionMatrix
-pred1 &lt;- predict(mdl1, testingTrained)
+                           allowParallel = TRUE)</code></pre>
+<p>– Then do train the models</p>
+<p>– Finally de-register parallel processing cluster</p>
+<pre class="r"><code>stopCluster(cluster)</code></pre>
+<p>– Now we’ll make predictions for each individual model and prepare metrics with the confusionMatrix for comparison with the stacked models:</p>
+<pre class="r"><code>pred1 &lt;- predict(mdl1, testingTrained)
 pred2 &lt;- predict(mdl2, testingTrained)
 pred3 &lt;- predict(mdl3, testingTrained)
 pred4 &lt;- predict(mdl4, testingTrained)
-acc &lt;- rbind(mdl1 = confusionMatrix(pred1, testingTrained$classe)$overall, 
-             mdl2 = confusionMatrix(pred2, testingTrained$classe)$overall, 
-             mdl3 = confusionMatrix(pred3, testingTrained$classe)$overall, 
-             mdl4 = confusionMatrix(pred4, testingTrained$classe)$overall)
 sens &lt;- rbind(mdl1 = t(confusionMatrix(pred1, testingTrained$classe)$byClass)[1,], 
                   mdl2 = t(confusionMatrix(pred2, testingTrained$classe)$byClass)[1,], 
                   mdl3 = t(confusionMatrix(pred3, testingTrained$classe)$byClass)[1,], 
                   mdl4 = t(confusionMatrix(pred4, testingTrained$classe)$byClass)[1,])
-acc &lt;- rbind(mdl1 = t(confusionMatrix(pred1, testingTrained$classe)$byClass)[2,], 
+spec &lt;- rbind(mdl1 = t(confusionMatrix(pred1, testingTrained$classe)$byClass)[2,], 
               mdl2 = t(confusionMatrix(pred2, testingTrained$classe)$byClass)[2,], 
               mdl3 = t(confusionMatrix(pred3, testingTrained$classe)$byClass)[2,], 
               mdl4 = t(confusionMatrix(pred4, testingTrained$classe)$byClass)[2,])
 sensAvg &lt;- t(data.frame(allMdlsAvg = colMeans(sens)))
-accAvg &lt;- t(data.frame(allModelsAvg = colMeans(acc)))
-## Stacking
-myStack &lt;- data.frame(mdl1 = pred1, 
+specAvg &lt;- t(data.frame(allModelsAvg = colMeans(spec)))</code></pre>
+<ul>
+<li>Stacking models – First prepare the new data frame</li>
+</ul>
+<pre class="r"><code>myStack &lt;- data.frame(mdl1 = pred1, 
                       mdl2 = pred2, 
                       mdl3 = pred3, 
                       mdl4 = pred4, 
-                      response = testingTrained$classe)
-## Parallelizing again
-library(parallel)
+                      response = testingTrained$classe)</code></pre>
+<p>– Parallelizing again (not neccesary to make it again step by step):</p>
+<pre class="r"><code>library(parallel)
 library(doParallel)
 cluster &lt;- makeCluster(detectCores() - 1) # convention to leave 1 core for OS
 registerDoParallel(cluster)
@@ -290,83 +293,129 @@ fitControl &lt;- trainControl(method = &quot;cv&quot;,
 x &lt;- myStack[, -ncol(myStack)]
 y &lt;- myStack[, ncol(myStack)]
 mdl &lt;- train(x, y, method = &quot;rf&quot;, trControl = fitControl, data = myStack)
-stopCluster(cluster)
-## Measuring accuracy
-pred &lt;- predict(mdl, myStack)
-ppalMetrics &lt;- t(confusionMatrix(pred, myStack$response)$byClass)[1:2,]
-## Comparing accuracies
-ppalMetrics; sensAvg; accAvg</code></pre>
-<pre><code>##              Class: A  Class: B  Class: C  Class: D  Class: E
-## Sensitivity 0.9919355 0.9907773 0.9707602 0.9875583 0.9986130
-## Specificity 0.9989312 0.9936789 0.9966039 0.9969512 0.9996877</code></pre>
+stopCluster(cluster)</code></pre>
+<ul>
+<li>Predict for measuring improvements obtained by stacking the models, so that</li>
+</ul>
+<p>– The average sensitivity of the four models are:</p>
+<pre class="r"><code>sensAvg</code></pre>
 <pre><code>##             Class: A  Class: B  Class: C  Class: D Class: E
 ## allMdlsAvg 0.9932796 0.9423584 0.9561404 0.9618974 0.971914</code></pre>
+<p>– The average specificity of the four models are:</p>
+<pre class="r"><code>specAvg</code></pre>
 <pre><code>##               Class: A  Class: B  Class: C  Class: D Class: E
 ## allModelsAvg 0.9874421 0.9891751 0.9878821 0.9957317 0.998985</code></pre>
-<pre class="r"><code>performance &lt;- data.frame(accGain = ppalMetrics[1, ] - sensAvg, 
-                          sensGain = ppalMetrics[2, ] - accAvg)
-performance</code></pre>
-<pre><code>##            accGain.Class..A accGain.Class..B accGain.Class..C
-## allMdlsAvg     -0.001344086       0.04841897       0.01461988
-##            accGain.Class..D accGain.Class..E sensGain.Class..A
-## allMdlsAvg       0.02566096       0.02669903        0.01148913
-##            sensGain.Class..B sensGain.Class..C sensGain.Class..D
-## allMdlsAvg       0.004503793       0.008721828       0.001219512
-##            sensGain.Class..E
-## allMdlsAvg      0.0007026858</code></pre>
-<pre class="r"><code>## Testing on independent test set: validationtrained
-## We can see that even the stacking doesn't increase the perform significantly. So, we can just
-## create a model based on random forest with a dataset of the same number of cases and expect to
-## give back a similar metrics, namely: accuracy and sensitivity
-## I made the model training it on the validation set. It could be on whatever of the 4 folds
-## previously generated, but the dataset with better metrics was the validation one, so that
-## I choose to train the model over this one.
-cluster &lt;- makeCluster(detectCores() - 1)
-registerDoParallel(cluster)
-fitControl &lt;- trainControl(method = &quot;cv&quot;,
-                           number = 3,
-                           allowParallel = TRUE)
-x &lt;- validationtrained[, -ncol(validationtrained)]
-y &lt;- validationtrained[, ncol(validationtrained)]
-mdlFinal &lt;- train(x, y, method = &quot;rf&quot;, trControl = fitControl, data = validationtrained)
-stopCluster(cluster)
-predFinal &lt;- predict(mdlFinal, validationtrained)
+<p>– The sensitivities of the stacked models are:</p>
+<pre class="r"><code>pred &lt;- predict(mdl, myStack)
+ppalMetrics &lt;- t(confusionMatrix(pred, myStack$response)$byClass)[1:2,]
+ppalMetrics[1,]</code></pre>
+<pre><code>##  Class: A  Class: B  Class: C  Class: D  Class: E 
+## 0.9919355 0.9907773 0.9707602 0.9875583 0.9986130</code></pre>
+<p>– and specificities:</p>
+<pre class="r"><code>pred &lt;- predict(mdl, myStack)
+ppalMetrics &lt;- t(confusionMatrix(pred, myStack$response)$byClass)[1:2,]
+ppalMetrics[2,]</code></pre>
+<pre><code>##  Class: A  Class: B  Class: C  Class: D  Class: E 
+## 0.9989312 0.9936789 0.9966039 0.9969512 0.9996877</code></pre>
+<p>– We can see that the gain on sensitivity obtained by stacking the models are:</p>
+<pre class="r"><code>(ppalMetrics[1, ] - sensAvg)[,1:5]</code></pre>
+<pre><code>##     Class: A     Class: B     Class: C     Class: D     Class: E 
+## -0.001344086  0.048418972  0.014619883  0.025660964  0.026699029</code></pre>
+<p>so that stacking the models just increase the sensitvity average by 0.022811</p>
+<p>– and specificity gained by stacking the models are:</p>
+<pre class="r"><code>(ppalMetrics[2, ] - specAvg)[,1:5]</code></pre>
+<pre><code>##     Class: A     Class: B     Class: C     Class: D     Class: E 
+## 0.0114891343 0.0045037927 0.0087218277 0.0012195122 0.0007026858</code></pre>
+<p>on average, the increase is just of 0.0320527</p>
+</div>
+<div id="selecting-final-model" class="section level2">
+<h2>4. Selecting final model</h2>
+<p>As we have seen, here a lot is about a tradeoff of performance: speed vs sensitivity-specificity (accuracy). Stacking the models doesn’t really increases the accuracy and sensitivity significantly, but do takes a lot of time to train the final model. Instead, if you train the model with just on of the test set, it will yield almost the same sensitivity specificity (accuracy too) and takes some like 1/5 of the time. So, I choose to:</p>
+<ul>
+<li>take the model trained on just one of the four folds; the one with the best performance</li>
+</ul>
+<pre class="r"><code>rowMeans(sens)</code></pre>
+<pre><code>##      mdl1      mdl2      mdl3      mdl4 
+## 0.9626731 0.9708591 0.9589611 0.9679784</code></pre>
+<pre class="r"><code>rowMeans(spec)</code></pre>
+<pre><code>##      mdl1      mdl2      mdl3      mdl4 
+## 0.9912709 0.9931091 0.9904616 0.9925312</code></pre>
+<p>namely, model2 (mdl2) - predict on the testingTrained for obtain metrics</p>
+<pre class="r"><code>confusionMatrix(pred2, testingTrained$classe)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1107   26    3    3    1
+##          B    6  725   15    2    5
+##          C    2    7  656    8    1
+##          D    1    0   10  623    8
+##          E    0    1    0    7  706
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.973           
+##                  95% CI : (0.9674, 0.9778)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.9658          
+##  Mcnemar's Test P-Value : 0.008844        
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.9919   0.9552   0.9591   0.9689   0.9792
+## Specificity            0.9882   0.9912   0.9944   0.9942   0.9975
+## Pos Pred Value         0.9711   0.9628   0.9733   0.9704   0.9888
+## Neg Pred Value         0.9968   0.9893   0.9914   0.9939   0.9953
+## Prevalence             0.2845   0.1935   0.1744   0.1639   0.1838
+## Detection Rate         0.2822   0.1848   0.1672   0.1588   0.1800
+## Detection Prevalence   0.2906   0.1919   0.1718   0.1637   0.1820
+## Balanced Accuracy      0.9901   0.9732   0.9768   0.9816   0.9883</code></pre>
+<ul>
+<li>predict on validationtrained and obtain the metrics</li>
+</ul>
+<pre class="r"><code>predFinal &lt;- predict(mdl2, validationtrained)
 confusionMatrix(predFinal, validationtrained$classe)</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
 ## Prediction    A    B    C    D    E
-##          A 1116    0    0    0    0
-##          B    0  759    0    0    0
-##          C    0    0  684    0    0
-##          D    0    0    0  643    0
-##          E    0    0    0    0  721
+##          A 1107   24    1    2    0
+##          B    2  716   33    3    2
+##          C    4   17  643   13    5
+##          D    1    2    7  622    8
+##          E    2    0    0    3  706
 ## 
 ## Overall Statistics
-##                                      
-##                Accuracy : 1          
-##                  95% CI : (0.9991, 1)
-##     No Information Rate : 0.2845     
-##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16  
-##                                      
-##                   Kappa : 1          
-##  Mcnemar's Test P-Value : NA         
+##                                          
+##                Accuracy : 0.9671         
+##                  95% CI : (0.961, 0.9725)
+##     No Information Rate : 0.2845         
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16      
+##                                          
+##                   Kappa : 0.9584         
+##  Mcnemar's Test P-Value : 2.398e-05      
 ## 
 ## Statistics by Class:
 ## 
 ##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity            1.0000   1.0000   1.0000   1.0000   1.0000
-## Specificity            1.0000   1.0000   1.0000   1.0000   1.0000
-## Pos Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
-## Neg Pred Value         1.0000   1.0000   1.0000   1.0000   1.0000
+## Sensitivity            0.9919   0.9433   0.9401   0.9673   0.9792
+## Specificity            0.9904   0.9874   0.9880   0.9945   0.9984
+## Pos Pred Value         0.9762   0.9471   0.9428   0.9719   0.9930
+## Neg Pred Value         0.9968   0.9864   0.9873   0.9936   0.9953
 ## Prevalence             0.2845   0.1935   0.1744   0.1639   0.1838
-## Detection Rate         0.2845   0.1935   0.1744   0.1639   0.1838
-## Detection Prevalence   0.2845   0.1935   0.1744   0.1639   0.1838
-## Balanced Accuracy      1.0000   1.0000   1.0000   1.0000   1.0000</code></pre>
-<pre class="r"><code>## The perfomance is awesome 100% in all the five classes
-## So, let's predict with the model on the quiz set, namely: in this case testing
-quizResponse &lt;- predQuiz &lt;- predict(mdlFinal, testing)
-## I got 20/20: Perfect</code></pre>
+## Detection Rate         0.2822   0.1825   0.1639   0.1586   0.1800
+## Detection Prevalence   0.2891   0.1927   0.1738   0.1631   0.1812
+## Balanced Accuracy      0.9912   0.9654   0.9640   0.9809   0.9888</code></pre>
+<p>As expected, the performance is a less than the optimistic one on testingTrained set - finally predict on the testing (dataset for quiz) to obtain the quiz responses</p>
+<pre class="r"><code>predict(mdl2, testing)</code></pre>
+<pre><code>##  [1] B A A A A E D B A A B C B A E E A D B B
+## Levels: A B C D E</code></pre>
+<p>I got 18/20</p>
+<p>```</p>
+</div>
 
 
 

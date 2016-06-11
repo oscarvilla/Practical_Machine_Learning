@@ -122,12 +122,9 @@ $(document).ready(function () {
 </div>
 
 
-<p><a href="http://rmarkdown.rstudio.com" class="uri">http://rmarkdown.rstudio.com</a>.</p>
 <div id="synopsis" class="section level2">
 <h2>Synopsis:</h2>
-</div>
-<div id="getting-cleaning-and-tidying-data" class="section level2">
-<h2>Getting, cleaning and tidying data</h2>
+<p>Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website on <a href="http://groupware.les.inf.puc-rio.br/har" class="uri">http://groupware.les.inf.puc-rio.br/har</a> The goal of your project is to predict the manner in which they did the exercise. This is the “classe” variable in the training set ## Getting, cleaning and tidying data</p>
 <div id="loading-training-data-previously-downloaded-from-the-respectives-urls" class="section level3">
 <h3>1. Loading training data previously downloaded from the respectives URLs:</h3>
 <p>training <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv" class="uri">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv</a>, and testing <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv" class="uri">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv</a></p>
@@ -153,8 +150,8 @@ testNames &lt;- colnames(testing)</code></pre>
 </ul>
 <pre class="r"><code>numNAsTraining &lt;- apply(training, 2, function(x) sum(is.na(x)))
 numNAsTesting &lt;- apply(testing, 2, function(x) sum(is.na(x)))
-saveRDS(numNAsTraining, &quot;./numNAsTraining.RDS&quot;) ## saving object
-saveRDS(numNAsTesting, &quot;./numNAsTesting.RDS&quot;) ## saving object
+saveRDS(numNAsTraining, &quot;./numNAsTraining.RDS&quot;) 
+saveRDS(numNAsTesting, &quot;./numNAsTesting.RDS&quot;)
 table(as.numeric(numNAsTraining))</code></pre>
 <pre><code>## 
 ##     0 19216 
@@ -183,7 +180,7 @@ testing &lt;- testing[, 8:ncol(testing)]</code></pre>
 <div id="training-models" class="section level2">
 <h2>3. Training models:</h2>
 <ul>
-<li>So far we have the test set ready-tidy to start applying machine learning. So let’s partitioning the data… 60% - 20% - 20%</li>
+<li>So far we have the test set ready-tidy to start applying machine learning. So let’s partitioning the data like this: 60% for training (aka trainingAll), 20% for evaluating the models (aka testingTrained), and 20% for validation (aka validationtrained). Remember a testset for quiz prediction has holding out (aka testing). The trainingAll will then be splitted out on 4 folds (aka training1, training2, training3 and training4).</li>
 </ul>
 <pre class="r"><code>library(caret)</code></pre>
 <pre><code>## Loading required package: lattice</code></pre>
@@ -206,8 +203,8 @@ validationtrained &lt;- testingAll[-inTrain, ]</code></pre>
 <pre class="r"><code>nrow(testingTrained) + nrow(validationtrained) == nrow(testingAll)</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 <ul>
-<li><p>It takes a lot of time to train a random forest model on a data set as big as this (rows = 11776 x cols = 53). I tryed it for around 30 minutes with parallelizing for allowing the use of three of the cores of a Intel® Core™ i7-6500U CPU @ 2.50GHz × 4 with 8GB of RAM availables, but couldn’t see the work ended and some issues appears with the closing of conections of the cluster for paralleilzation. So, I tried rpart as method, and yields just 0.5073 of accuracy, not enougth to pass the quizz. Tried lda as method, but yields just 0.7 of accuracy, not enougth. Also svm with a accuracy of 0.89. It’s not so bad, but random forest is better.</p></li>
-<li><p>I choose to split the dataset in 4 folds aiming to reduce the training random forest models time, and then stack them all four together with a random forest again.</p></li>
+<li><p>It takes a lot of time to train a random forest model on a data set as big as this (rows = 11776 x cols = 53). I did try it for around 30 minutes with parallelizing for allowing the use of three of the cores of a Intel® Core™ i7-6500U CPU @ 2.50GHz × 4 with 8GB of RAM availables, but some issues appears with the closing of connections of the cluster for parallelization. So, I tried rpart as method, and yields just 0.5073 of accuracy, not enough to pass the quiz. Tried lda as method, but yields just 0.7 of accuracy, not enough. Also svm with a accuracy of 0.89. It’s not so bad, but random forest is better.</p></li>
+<li><p>I choose to split the dataset in 4 folds aiming to reduce the training random forest models time, and then stack them all four together with a random forest again; every random forest model with 3 cross validation.</p></li>
 <li><p>Splitting the data onto four folds:</p></li>
 </ul>
 <pre class="r"><code>set.seed(1983)
@@ -226,7 +223,7 @@ duplicated(DF)</code></pre>
 <pre class="r"><code>nrow(trainingAll) == nrow(training1) + nrow(training2) + nrow(training3) + nrow(training4)</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 <ul>
-<li>Now, following the instructions of Mentor Len Greski on <a href="https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md" class="uri">https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md</a>, my objetive it’s to speed up the process:</li>
+<li>Now, following the instructions of Mentor Len Greski on <a href="https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md" class="uri">https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md</a>, my objective it’s to speed up the process:</li>
 </ul>
 <p>– First set up training set to the x / y syntax because model format performs poorly on the formula way</p>
 <pre class="r"><code>x1 &lt;- training1[, -ncol(training1)]
@@ -282,7 +279,7 @@ specAvg &lt;- t(data.frame(allModelsAvg = colMeans(spec)))</code></pre>
                       mdl3 = pred3, 
                       mdl4 = pred4, 
                       response = testingTrained$classe)</code></pre>
-<p>– Parallelizing again (not neccesary to make it again step by step):</p>
+<p>– Parallelizing again (not necessary to make it again step by step):</p>
 <pre class="r"><code>library(parallel)
 library(doParallel)
 cluster &lt;- makeCluster(detectCores() - 1) # convention to leave 1 core for OS
@@ -330,7 +327,7 @@ ppalMetrics[2,]</code></pre>
 </div>
 <div id="selecting-final-model" class="section level2">
 <h2>4. Selecting final model</h2>
-<p>As we have seen, here a lot is about a tradeoff of performance: speed vs sensitivity-specificity (accuracy). Stacking the models doesn’t really increases the accuracy and sensitivity significantly, but do takes a lot of time to train the final model. Instead, if you train the model with just on of the test set, it will yield almost the same sensitivity specificity (accuracy too) and takes some like 1/5 of the time. So, I choose to:</p>
+<p>As we have seen, here a lot is about a trade off of performance: speed vs sensitivity-specificity (accuracy). Stacking the models doesn’t really increases the accuracy and sensitivity significantly, but do takes a lot of time to train the final model. Instead, if you train the model with just on of the test set, it will yield almost the same sensitivity specificity (accuracy too) and takes some like 1/5 of the time. In this case, the splitting on four folds-train random forest models-and measure accuracy will keep just a as an additional cross validation with four folds. So, I choose to:</p>
 <ul>
 <li>take the model trained on just one of the four folds; the one with the best performance</li>
 </ul>
@@ -413,8 +410,7 @@ confusionMatrix(predFinal, validationtrained$classe)</code></pre>
 <pre class="r"><code>predict(mdl2, testing)</code></pre>
 <pre><code>##  [1] B A A A A E D B A A B C B A E E A D B B
 ## Levels: A B C D E</code></pre>
-<p>I got 18/20</p>
-<p>```</p>
+<p>I got 18/20 = 0.9 on quiz, 0.06 less than the accuracy expect when the model was measured.</p>
 </div>
 
 

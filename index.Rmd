@@ -9,11 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-<http://rmarkdown.rstudio.com>.
-
-
 ## Synopsis: 
-
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website on <http://groupware.les.inf.puc-rio.br/har>
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set
 ## Getting, cleaning and tidying data
 
 ### 1. Loading training data previously downloaded from the respectives URLs: 
@@ -39,15 +37,15 @@ all.equal(trainNames[-length(trainNames)], testNames[-length(testNames)])
 ```{r check_NAs, cache=TRUE}
 numNAsTraining <- apply(training, 2, function(x) sum(is.na(x)))
 numNAsTesting <- apply(testing, 2, function(x) sum(is.na(x)))
-saveRDS(numNAsTraining, "./numNAsTraining.RDS") ## saving object
-saveRDS(numNAsTesting, "./numNAsTesting.RDS") ## saving object
+saveRDS(numNAsTraining, "./numNAsTraining.RDS") 
+saveRDS(numNAsTesting, "./numNAsTesting.RDS")
 table(as.numeric(numNAsTraining))
 ```
 - 60 of them have 0 NAs and 100 of them have 19216 NAs. That's mean all those 100 columns have a proportion of cases as NAs of `r max(as.numeric(numNAsTraining)) / nrow(training)`%
 
 - Will not try to replace them because of the high proportion; instead will remove them because they doesn't allow to calculate predictions with the model if included as newdata.
 ```{r remove_NAsZeroCols, cache = TRUE, include=FALSE}
-readRDS("./numNAsTraining.RDS") ## loading saved objects
+readRDS("./numNAsTraining.RDS")
 readRDS("./numNAsTesting.RDS")
 training <- training[,(numNAsTraining == 0)]
 testing <- testing[,(numNAsTesting == 0)]
@@ -67,7 +65,7 @@ testing <- testing[, 8:ncol(testing)]
 all.equal(names(training[,-ncol(training)]), names(testing[,-ncol(testing)]))
 ```
 ## 3. Training models:
-- So far we have the test set ready-tidy to start applying machine learning. So let's partitioning the data... 60% - 20% - 20%
+- So far we have the test set ready-tidy to start applying machine learning. So let's partitioning the data like this: 60% for training (aka trainingAll), 20% for evaluating the models (aka testingTrained), and  20% for validation (aka validationtrained). Remember a testset for quiz prediction has holding out (aka testing). The trainingAll will then be splitted out on 4 folds (aka training1, training2, training3 and training4).
 ```{r spliting_data, cache=TRUE}
 library(caret)
 set.seed(1981)
@@ -89,10 +87,10 @@ validationtrained <- testingAll[-inTrain, ]
 nrow(testingTrained) + nrow(validationtrained) == nrow(testingAll)
 ```
 
-- It takes a lot of time to train a random forest model on a data set as big as this (rows = `r nrow(trainingAll)` x cols = `r ncol(trainingAll)`). I tryed it for around 30 minutes with parallelizing for allowing the use of three of the cores of a Intel® Core™ i7-6500U CPU @ 2.50GHz × 4 with 8GB of RAM availables, but couldn't see the work ended and some issues appears with the closing of conections of the cluster for paralleilzation.
-So, I tried rpart as method, and yields just 0.5073 of accuracy, not enougth to pass the quizz. Tried lda as method, but yields just 0.7 of accuracy, not enougth. Also svm with a accuracy of 0.89. It's not so bad, but random forest is better.
+- It takes a lot of time to train a random forest model on a data set as big as this (rows = `r nrow(trainingAll)` x cols = `r ncol(trainingAll)`). I did try it for around 30 minutes with parallelizing for allowing the use of three of the cores of a Intel® Core™ i7-6500U CPU @ 2.50GHz × 4 with 8GB of RAM availables, but some issues appears with the closing of connections of the cluster for parallelization.
+So, I tried rpart as method, and yields just 0.5073 of accuracy, not enough to pass the quiz. Tried lda as method, but yields just 0.7 of accuracy, not enough. Also svm with a accuracy of 0.89. It's not so bad, but random forest is better.
 
-- I choose to split the dataset in 4 folds aiming to reduce the training random forest models time, and then stack them all four together with a random forest again.
+- I choose to split the dataset in 4 folds aiming to reduce the training random forest models time, and then stack them all four together with a random forest again; every random forest model with 3 cross validation.
 
 - Splitting the data onto four folds:
 ```{r splitting_training, cache=TRUE}
@@ -112,7 +110,7 @@ and then check no losses of rows
 ```{r validation4, cache=TRUE}
 nrow(trainingAll) == nrow(training1) + nrow(training2) + nrow(training3) + nrow(training4)
 ```
-- Now, following the instructions of Mentor Len Greski on <https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md>, my objetive it's to speed up the process:
+- Now, following the instructions of Mentor Len Greski on <https://github.com/lgreski/datasciencectacontent/blob/master/markdown/pml-randomForestPerformance.md>, my objective it's to speed up the process:
 
 -- First set up training set to the x / y syntax because model format performs poorly on the formula way
 ```{r formatting_dataset, cache=TRUE}
@@ -192,7 +190,7 @@ myStack <- data.frame(mdl1 = pred1,
                       mdl4 = pred4, 
                       response = testingTrained$classe)
 ```
--- Parallelizing again (not neccesary to make it again step by step):
+-- Parallelizing again (not necessary to make it again step by step):
 ```{r parallelizing_trainning_stack_model, cache=TRUE}
 library(parallel)
 library(doParallel)
@@ -243,8 +241,8 @@ so that stacking the models just increase the sensitvity average by `r mean((ppa
 on average, the increase is just of `r mean((ppalMetrics[2, ] - sensAvg)[,1:5])`
 
 ## 4. Selecting final model
-As we have seen, here a lot is about a tradeoff of performance: speed vs sensitivity-specificity (accuracy).
-Stacking the models doesn't really increases the accuracy and sensitivity significantly, but do takes a lot of time to train the final model. Instead, if you train the model with just on of the test set, it will yield almost the same sensitivity specificity (accuracy too) and takes some like 1/5 of the time.
+As we have seen, here a lot is about a trade off of performance: speed vs sensitivity-specificity (accuracy).
+Stacking the models doesn't really increases the accuracy and sensitivity significantly, but do takes a lot of time to train the final model. Instead, if you train the model with just on of the test set, it will yield almost the same sensitivity specificity (accuracy too) and takes some like 1/5 of the time. In this case, the splitting on four folds-train random forest models-and measure accuracy will keep just a as an additional cross validation with four folds.
 So, I choose to: 
 
 - take the model trained on just one of the four folds; the one with the best performance
@@ -271,6 +269,4 @@ As expected, the performance is a less than the optimistic one on testingTrained
 predict(mdl2, testing)
 ```
 
- I got 18/20
-
-```
+ I got 18/20 = `r 18/20` on quiz, 0.06 less than the accuracy expect when the model was measured.
